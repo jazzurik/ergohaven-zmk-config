@@ -14,7 +14,7 @@
         columns = <2>;
         rows = <1>;
         map = <
-        RC(0,3) RC(0,2)
+            RC(0,3) RC(0,2)
         >;
     };
 
@@ -33,30 +33,59 @@
             bindings = <&bt BT_NXT>, <&bt BT_CLR_ALL>;
         };
 
-        adj_td: adj_td {
-            compatible = "zmk,behavior-tap-dance";
-            label = "ADJ_TD";
-            #binding-cells = <0>;
-            bindings = <&hold_mo_tap_mkp 1 MB3>, <&to 3>;
-        };
-
         hold_mo_tap_mkp: hold_mo_tap_mkp {
             compatible = "zmk,behavior-hold-tap";
             label = "HOLD_MO_TAP_MKP";
             bindings = <&mo>, <&mkp>;
-
             #binding-cells = <2>;
             hold-while-undecided;
-            tapping-term-ms = <200>;
             hold-while-undecided-linger;
+            tapping-term-ms = <200>;
+        };
+
+        /* ЛКМ:
+           1 тап = ЛКМ
+           2 тап = ЛКМ
+           3-й тап:
+             - быстро отпустил = ЛКМ
+             - удержал = scroll layer 2, пока держишь
+        */
+        left_td_scroll: left_td_scroll {
+            compatible = "zmk,behavior-tap-dance";
+            label = "LEFT_TD_SCROLL";
+            #binding-cells = <0>;
+            tapping-term-ms = <220>;
+            bindings = <
+                &mkp MB1
+                &mkp MB1
+                &hold_mo_tap_mkp 2 MB1
+            >;
+        };
+
+        /* ПКМ:
+           1-й шаг = обычный ПКМ / hold = scroll layer 2
+           2-й тап = обычный ПКМ
+           3-й тап = toggle sniper layer 1
+        */
+        right_td_sniper: right_td_sniper {
+            compatible = "zmk,behavior-tap-dance";
+            label = "RIGHT_TD_SNIPER";
+            #binding-cells = <0>;
+            tapping-term-ms = <220>;
+            bindings = <
+                &hold_mo_tap_mkp 2 MB2
+                &mkp MB2
+                &tog 1
+            >;
         };
     };
 
     combos {
         compatible = "zmk,combos";
 
+        /* Две кнопки вместе = средняя кнопка */
         base_combo {
-            bindings = <&adj_td>;
+            bindings = <&mkp MB3>;
             key-positions = <0 1>;
             layers = <0 1 2>;
         };
@@ -73,7 +102,7 @@
 
         base {
             bindings = <
-&mkp MB1  &hold_mo_tap_mkp 2 MB2
+                &left_td_scroll  &right_td_sniper
             >;
 
             display-name = "Base";
@@ -81,7 +110,7 @@
 
         scroll {
             bindings = <
-&trans  &trans
+                &trans  &trans
             >;
 
             display-name = "Scroll";
@@ -89,7 +118,7 @@
 
         sniper {
             bindings = <
-&trans  &trans
+                &trans  &trans
             >;
 
             display-name = "Sniper";
@@ -97,7 +126,7 @@
 
         adjust {
             bindings = <
-&adj1  &adj2
+                &adj1  &adj2
             >;
 
             label = "Adjust";
@@ -110,6 +139,7 @@
 &trackball_listener {
     input-processors = <&zip_xy_scaler 9 20>;
 
+    /* scroll layer */
     scroller {
         layers = <2>;
         input-processors =
@@ -118,6 +148,7 @@
             <&zip_xy_to_scroll_mapper &zip_scroll_snap>;
     };
 
+    /* sniper layer */
     sniper {
         layers = <1>;
         input-processors = <&zip_xy_scaler 1 4>;
